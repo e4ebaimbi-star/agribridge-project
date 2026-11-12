@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: agribridge
+      POSTGRES_USER: agribridge
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agribridge -d agribridge"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  api:
+    build:
+      context: ./api
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0}
+        GIT_SHA: ${GIT_SHA:-local}
+        BUILD_DATE: ${BUILD_DATE:-local}
+        IMAGE_TAG: ${IMAGE_TAG:-local}
+    image: agribridge-api:${IMAGE_TAG:-local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 30s    
+    environment:
+      NODE_ENV: production
+      PGHOST: postgres
+      PGDATABASE: agribridge
+      PGUSER: agribridge
+      PGPASSWORD: ${PGPASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SEED_PASSWORD: ${SEED_PASSWORD}
+      COOKIE_SECURE: "false"
+      RUN_MIGRATIONS: "true"
+      SEED_DEMO_DATA: "true"
+      REDIS_ENABLED: "true"
+      REDIS_URL: redis://redis:6379
+      REDIS_REQUIRED: ${REDIS_REQUIRED:-false}
+      SHUTDOWN_GRACE_MS: "20000"  
+
+    ports:
+      - "3000:3000"
+
+  web:
+    build: ./web
+    image: agribridge-web:${IMAGE_TAG:-local}
+    environment:
+      API_UPSTREAM: api:3000
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
