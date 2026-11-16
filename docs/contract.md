@@ -48,6 +48,7 @@ Web runtime variable: `API_UPSTREAM` (host:port of the API, used by the nginx pr
 
 - Compose: nginx proxies `/api` to `API_UPSTREAM` (api:3000). API port 3000 is also published for probes and metrics.
 - Cluster: the ingress routes `/api` to the API Service and `/` to the web Service. The nginx proxy block goes unused there. Same image either way.
+-The fresh-clone test works because it exposes assumptions like “port 3000 is free”. If you want it recorded in docs/contract.md, add one line under the local environment section: stop any other stack using ports 3000 and 8080 first.
 
 ## 5. Health, shutdown and posture
 
@@ -87,3 +88,16 @@ Web runtime variable: `API_UPSTREAM` (host:port of the API, used by the nginx pr
 ## 8. Chart values keys (P3 fills in)
 
 <list each values key, what it controls, and which values file sets it>
+
+## agribridge_failed_logins_total counter
+Group	Metric	Type
+HTTP requests	http_requests_total	counter
+HTTP latency	http_request_duration_seconds	histogram
+HTTP in flight	http_requests_in_flight	gauge
+DB query timing	db_query_duration_seconds	histogram
+DB errors	db_query_errors_total	counter
+DB pool	db_pool_connections	gauge
+Cache	cache_operations_total	counter
+Build info	agribridge_build_info	gauge
+Business metrics	agribridge_orders_created_total, agribridge_order_value_naira_sum, agribridge_lots_open, agribridge_order_state_transitions_total, agribridge_failed_logins_total	counter and gauge
+Process health	nodejs_*	gauge and counter
