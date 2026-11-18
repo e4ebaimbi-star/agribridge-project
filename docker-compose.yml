@@ -4,6 +4,7 @@ services:
     profiles: ["observability"]
     volumes:
       - ./compose/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./compose/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
     ports:
       - "9090:9090"
     depends_on:
@@ -31,6 +32,7 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./compose/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U agribridge -d agribridge"]
       interval: 5s

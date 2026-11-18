@@ -1,0 +1,47 @@
+groups:
+  - name: agribridge
+    rules:
+      - alert: ApiDown
+        expr: up{job="agribridge-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AgriBridge API target is down"
+
+      - alert: CacheUnavailable
+        expr: >
+          sum(rate(cache_operations_total{operation="get",result="miss"}[2m])) > 0
+          and
+          sum(rate(cache_operations_total{operation="set",result="hit"}[2m])) == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cache lookups are missing and nothing is being written back. Redis is probably unreachable (degraded mode)."
+
+      - alert: High5xxRate
+        expr: >
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 5% of requests are returning 5xx"
+
+      - alert: DbPoolWaiting
+        expr: max(db_pool_connections{state="waiting"}) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Requests are waiting for a database connection (pool saturated)"
+
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 request latency is above 1 second"
